@@ -8,12 +8,14 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"github.com/gorilla/websocket"
 	chshare "github.com/yunfeiyang1916/cloud-chisel/share"
 	"github.com/yunfeiyang1916/cloud-chisel/share/ccrypto"
 	"github.com/yunfeiyang1916/cloud-chisel/share/cio"
 	"github.com/yunfeiyang1916/cloud-chisel/share/cnet"
 	"github.com/yunfeiyang1916/cloud-chisel/share/settings"
 	"github.com/yunfeiyang1916/cloud-chisel/share/tunnel"
+	"golang.org/x/net/proxy"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -281,5 +283,47 @@ func (c *Client) Start(ctx context.Context) error {
 		}
 		return c.tunnel.BindRemotes(ctx, clientInbound)
 	})
+	return nil
+}
+
+// 设置代理
+func (c *Client) setProxy(u *url.URL, d *websocket.Dialer) error {
+	// 连接代理,非socks代理
+	if !strings.HasPrefix(u.Scheme, "socks") {
+		d.Proxy = func(*http.Request) (*url.URL, error) {
+			return u, nil
+		}
+		return nil
+	}
+	// SOCKS5 代理
+	if u.Scheme != "socks" && u.Scheme != "socks5h" {
+		return fmt.Errorf("unsupported socks proxy type: %s:// (only socks5h:// or socks:// is supported)", u.Scheme)
+	}
+	var auth *proxy.Auth
+	if u.User != nil {
+		pass, _ := u.User.Password()
+		auth = &proxy.Auth{
+			User:     u.User.Username(),
+			Password: pass,
+		}
+	}
+	socksDialer, err := proxy.SOCKS5("tcp", u.Host, auth, proxy.Direct)
+	if err != nil {
+		return err
+	}
+	d.NetDial = socksDialer.Dial
+	return nil
+}
+
+// Wait blocks while the client is running.
+func (c *Client) Wait() error {
+	return c.eg.Wait()
+}
+
+// Close 关闭客户端
+func (c *Client) Close() error {
+	if c.stop != nil {
+		c.stop()
+	}
 	return nil
 }
