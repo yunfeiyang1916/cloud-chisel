@@ -8,6 +8,7 @@ import (
 	"github.com/jpillora/backoff"
 	chshare "github.com/yunfeiyang1916/cloud-chisel/share"
 	"github.com/yunfeiyang1916/cloud-chisel/share/cnet"
+	"github.com/yunfeiyang1916/cloud-chisel/share/cos"
 	"github.com/yunfeiyang1916/cloud-chisel/share/settings"
 	"golang.org/x/crypto/ssh"
 	"io"
@@ -137,7 +138,7 @@ func (c *Client) connectionOnce(ctx context.Context) (connected, retry bool, err
 	}
 	// 连接延迟时长
 	c.Infof("Connected (Latency %s)", time.Since(t0))
-	// 移交SSH连接以便隧道使用，阻断
+	// 移交SSH连接以便隧道使用，并阻塞
 	retry = true
 	err = c.tunnel.BindSSH(ctx, sshConn, reqs, chans)
 	if n, ok := err.(net.Error); ok && !n.Temporary() {
