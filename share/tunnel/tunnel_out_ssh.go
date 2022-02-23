@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-// 处理ssh请求
+// 处理ssh在正常数据流之外发送的请求，接收ping,响应pong。主要用于保活
 func (t *Tunnel) handleSSHRequests(reqs <-chan *ssh.Request) {
 	for r := range reqs {
 		switch r.Type {
@@ -23,7 +23,8 @@ func (t *Tunnel) handleSSHRequests(reqs <-chan *ssh.Request) {
 		}
 	}
 }
-
+// 处理ssh管道
+// ssh.NewChannel 表示一个通道的传入请求。它必须通过调用Accept来接受使用，或者通过调用Reject来拒绝使用
 func (t *Tunnel) handleSSHChannels(chans <-chan ssh.NewChannel) {
 	for ch := range chans {
 		go t.handleSSHChannel(ch)
@@ -31,6 +32,7 @@ func (t *Tunnel) handleSSHChannels(chans <-chan ssh.NewChannel) {
 }
 
 // 处理ssh管道
+// ssh.NewChannel 表示一个通道的传入请求。它必须通过调用Accept来接受使用，或者通过调用Reject来拒绝使用
 func (t *Tunnel) handleSSHChannel(ch ssh.NewChannel) {
 	if !t.Config.Outbound {
 		t.Debugf("Denied outbound connection")

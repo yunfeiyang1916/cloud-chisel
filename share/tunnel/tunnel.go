@@ -28,9 +28,9 @@ type Config struct {
 	KeepAlive time.Duration
 }
 
-// Tunnel 表示具有代理能力的SSH隧道, chisel的客户端和服务端都是隧道
-// 客户端有一组远程映射，而凿子服务器有多组远程映射(每个客户端有一组)
-// 每个remote都有一个到代理的1:1映射
+// Tunnel 表示具有代理能力的SSH隧道, chisel的客户端和服务端都是隧道。
+// 客户端有一组远程映射，而凿子服务器有多组远程映射(每个客户端有一组)。
+// 每个remote都有一个1:1代理映射
 // 代理通过ssh监听、发送数据，ssh连接的另一端与端点通信并返回响应。
 type Tunnel struct {
 	Config
@@ -68,7 +68,7 @@ func New(c Config) *Tunnel {
 	return t
 }
 
-// BindSSH 提供一个活动的SSH用于隧道
+// BindSSH 提供一个活动的SSH用于隧道使用
 func (t *Tunnel) BindSSH(ctx context.Context, c ssh.Conn, reqs <-chan *ssh.Request, chans <-chan ssh.NewChannel) error {
 	// link ctx to ssh-conn
 	go func() {
@@ -88,10 +88,12 @@ func (t *Tunnel) BindSSH(ctx context.Context, c ssh.Conn, reqs <-chan *ssh.Reque
 	if t.Config.KeepAlive > 0 {
 		go t.keepAliveLoop(c)
 	}
-	// block until closed
+	// 用于保活
 	go t.handleSSHRequests(reqs)
+	// 主要逻辑
 	go t.handleSSHChannels(chans)
 	t.Debugf("SSH connected")
+	// 阻塞直到连接关闭
 	err := c.Wait()
 	t.Debugf("SSH disconnected")
 	// mark inactive and block

@@ -4,12 +4,16 @@ import (
 	"context"
 	chclient "github.com/yunfeiyang1916/cloud-chisel/client"
 	"log"
+	"time"
 )
 
 func main() {
 	c := chclient.Config{
-		Server:  "https://chisel-demo.herokuapp.com",
-		Remotes: []string{"3000"},
+		Server:           "localhost:8888",
+		Remotes:          []string{"3000"},
+		Auth:             "foo:bar",
+		MaxRetryInterval: time.Minute,
+		MaxRetryCount:    -1,
 	}
 	client, err := chclient.NewClient(&c)
 	if err != nil {

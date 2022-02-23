@@ -2,6 +2,7 @@ package chserver
 
 import (
 	"context"
+	"errors"
 	"github.com/gorilla/websocket"
 	"github.com/jpillora/requestlog"
 	chshare "github.com/yunfeiyang1916/cloud-chisel/share"
@@ -29,7 +30,7 @@ type Config struct {
 	// 形式为：<user:pass>，可选。
 	// 等价于authfile {"<user:pass>": [""]},如果未设置，则将使用AUTH环境变量
 	Auth string
-	//
+	// 代理
 	Proxy string
 	// 是否允许客户端访问内部的SOCKS5代理
 	Socks5 bool
@@ -184,5 +185,26 @@ func (s *Server) authUser(c ssh.ConnMetadata, password []byte) (*ssh.Permissions
 	if s.users.Len() == 0 {
 		return nil, nil
 	}
-	
+	// 检查用户是否存在且密码匹配
+	n := c.User()
+	user, found := s.users.Get(n)
+	if !found || user.Pass != string(password) {
+		s.Debugf("Login failed for user: %s", n)
+		return nil, errors.New("Invalid authentication for username: %s")
+	}
+	// insert the user session map
+	// TODO 应该加个互斥锁
+	s.sessions.Set(string(c.SessionID()), user)
+	return nil, nil
+}
+
+// DeleteUser removes a user from the server user index
+func (s *Server) DeleteUser(user string) {
+	s.users.Del(user)
+}
+
+// ResetUsers in the server user index.
+// Use nil to remove all.
+func (s *Server) ResetUsers(users []*settings.User) {
+	s.users.Reset(users)
 }

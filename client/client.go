@@ -40,7 +40,7 @@ type Config struct {
 	// 可选的保活间隔。 由于底层传输是HTTP，在许多情况下我们将遍历代理，这些代理通常会关闭空闲连接。
 	// 您必须使用单位指定时间，例如“5s”或“2m”。 默认为“25s”（设置为 0s 以禁用）。
 	KeepAlive time.Duration
-	// 退出前重试的最大次数。 默认为无限制。
+	// 退出前重试的最大次数。 -1表示无限制。
 	MaxRetryCount int
 	// 断开连接后重试前的最大等待时间。默认为 5 分钟。
 	MaxRetryInterval time.Duration

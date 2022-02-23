@@ -146,7 +146,7 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, req *http.Request) {
 	// bind
 	eg, ctx := errgroup.WithContext(req.Context())
 	eg.Go(func() error {
-		// 移交SSH连接以便隧道使用，并阻塞
+		// 移交SSH连接以供隧道使用，并阻塞
 		return tunnel.BindSSH(ctx, sshConn, reqs, chans)
 	})
 	eg.Go(func() error {
