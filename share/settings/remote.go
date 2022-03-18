@@ -34,20 +34,20 @@ import (
 
 // Remote 本地与远程服务的映射
 type Remote struct {
-	// 本地域名
+	// 指的是chisel server上的host
 	LocalHost string
-	// 本地端口
+	// 指的是chisel server上的port
 	LocalPort string
-	// 本地协议
+	// 指的是chisel server上的协议
 	LocalProto string
-	// 远程域名
+	// 指的是要代理的服务的host
 	RemoteHost string
-	// 远程端口
+	// 指的是要代理的服务的port
 	RemotePort string
-	// 远程协议
+	// 指的是要代理的服务的协议
 	RemoteProto string
 	Socks       bool
-	// 反向代理，是否允许客户端指定反向端口转发远程服务
+	// 反向端口转发，是否开启客户端指定反向端口转发远程服务
 	Reverse bool
 	// 使用标准输入输出
 	Stdio bool
@@ -269,7 +269,7 @@ func (r Remote) CanListen() bool {
 // Remotes 本地与远程服务的映射集合
 type Remotes []*Remote
 
-// Reversed 获取所有反向代理映射
+// Reversed 为true表示过滤反向代理，false表示过滤非反向代理
 func (rs Remotes) Reversed(reverse bool) Remotes {
 	subset := Remotes{}
 	for _, r := range rs {

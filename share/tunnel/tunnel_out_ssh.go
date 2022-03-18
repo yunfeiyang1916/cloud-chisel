@@ -23,6 +23,7 @@ func (t *Tunnel) handleSSHRequests(reqs <-chan *ssh.Request) {
 		}
 	}
 }
+
 // 处理ssh管道
 // ssh.NewChannel 表示一个通道的传入请求。它必须通过调用Accept来接受使用，或者通过调用Reject来拒绝使用
 func (t *Tunnel) handleSSHChannels(chans <-chan ssh.NewChannel) {
@@ -60,6 +61,7 @@ func (t *Tunnel) handleSSHChannel(ch ssh.NewChannel) {
 	go ssh.DiscardRequests(reqs)
 	l := t.Logger.Fork("conn#%d", t.connStats.New())
 	// ready to handle
+	// 递增连接计数器打开数量
 	t.connStats.Open()
 	l.Debugf("Open %s", t.connStats.String())
 	if socks {

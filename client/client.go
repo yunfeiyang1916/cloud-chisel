@@ -52,7 +52,12 @@ type Config struct {
 	// 或: socks://admin:password@my-server.com:1080
 	Proxy string
 	// 是通过服务器建立的远程连接隧道，
-	// 每个连接都采用以下形式：<local-host>:<local-port>:<remote-host>:<remote-port>
+	// 每个连接都采用以下形式：<local-host>:<local-port>:<remote-host>:<remote-port>/<protocol>
+	// local-host defaults to 0.0.0.0 (all interfaces). 指的是chisel server上的host
+	// local-port defaults to remote-port.	指的是chisel server上的port
+	// remote-port is required*. 指的是要代理的服务的host
+	// remote-host defaults to 0.0.0.0 (server localhost). 指的是要代理的服务的port
+	// protocol defaults to tcp.
 	Remotes []string
 	// Header 头，比如Foo: Bar
 	Headers http.Header

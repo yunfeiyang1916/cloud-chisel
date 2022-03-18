@@ -18,9 +18,10 @@ func main() {
 		log.Fatal(err)
 	}
 	host := "0.0.0.0"
-	port := "8888"
+	port := "28888"
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	s.Debug = true
 	if err := s.StartContext(ctx, host, port); err != nil {
 		log.Fatal(err)
 	}

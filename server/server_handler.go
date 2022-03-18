@@ -154,7 +154,7 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, req *http.Request) {
 		if len(serverInbound) == 0 {
 			return nil
 		}
-		// 阻塞
+		// 将给定的远程服务转换为代理并阻塞，直到调用者通过取消上下文来关闭代理或出现代理错误后关闭
 		return tunnel.BindRemotes(ctx, serverInbound)
 	})
 	err = eg.Wait()

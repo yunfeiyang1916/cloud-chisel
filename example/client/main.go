@@ -4,13 +4,14 @@ import (
 	"context"
 	chclient "github.com/yunfeiyang1916/cloud-chisel/client"
 	"log"
+	"os"
 	"time"
 )
 
 func main() {
 	c := chclient.Config{
-		Server:           "localhost:8888",
-		Remotes:          []string{"R:0.0.0.0:45320:8081"},
+		Server:           "localhost:28888",
+		Remotes:          []string{"R:0.0.0.0:28080:8080"},
 		Auth:             "9af92df4-e427-4086-9841-08da393c0f5c:b5fbcf537ed1a0d284fb6c1e236de0a4",
 		KeepAlive:        30 * time.Second,
 		MaxRetryInterval: time.Minute,
@@ -22,7 +23,7 @@ func main() {
 	}
 	client.Debug = true
 	time.AfterFunc(10*time.Second, func() {
-		client.Close()
+		os.Exit(0)
 	})
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

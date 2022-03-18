@@ -17,6 +17,7 @@ type sshTunnel interface {
 
 type Proxy struct {
 	*cio.Logger
+	// ssh 隧道
 	sshTun sshTunnel
 	id     int
 	count  int
@@ -136,7 +137,7 @@ func (p *Proxy) pipeRemote(ctx context.Context, src io.ReadWriteCloser) {
 		l.Infof("Stream error: %s", err)
 		return
 	}
-	// 丢弃请求？
+	// 读取来自传入通道的所有请求，并响应false
 	go ssh.DiscardRequests(reqs)
 	//then pipe
 	s, r := cio.Pipe(src, dst)

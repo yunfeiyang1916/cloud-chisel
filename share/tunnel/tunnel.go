@@ -88,7 +88,7 @@ func (t *Tunnel) BindSSH(ctx context.Context, c ssh.Conn, reqs <-chan *ssh.Reque
 	if t.Config.KeepAlive > 0 {
 		go t.keepAliveLoop(c)
 	}
-	// 用于保活
+	// 处理ssh在正常数据流之外发送的请求，接收ping,响应pong。
 	go t.handleSSHRequests(reqs)
 	// 主要逻辑
 	go t.handleSSHChannels(chans)
@@ -139,7 +139,7 @@ func (t *Tunnel) activatingConnWait() <-chan struct{} {
 	return ch
 }
 
-// BindRemotes 将给定的远程服务器转换为代理并阻塞，直到调用者取消上下文或出现代理错误
+// BindRemotes 将给定的远程服务转换为代理并阻塞，直到调用者通过取消上下文来关闭代理或出现代理错误后关闭
 func (t *Tunnel) BindRemotes(ctx context.Context, remotes []*settings.Remote) error {
 	if len(remotes) == 0 {
 		return errors.New("no remotes")
