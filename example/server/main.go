@@ -11,7 +11,7 @@ func main() {
 	config := &chserver.Config{
 		AuthFile:  "config/users.json",
 		Reverse:   true,
-		KeepAlive: 25 * time.Second,
+		KeepAlive: 10 * time.Second,
 	}
 	s, err := chserver.NewServer(config)
 	if err != nil {
@@ -22,6 +22,11 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	s.Debug = true
+	time.AfterFunc(time.Minute, func() {
+		s.CloseTunnel(ctx, "28081")
+		time.Sleep(time.Second)
+		s.CloseTunnel(ctx, "28080")
+	})
 	if err := s.StartContext(ctx, host, port); err != nil {
 		log.Fatal(err)
 	}

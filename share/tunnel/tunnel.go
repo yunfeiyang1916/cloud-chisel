@@ -187,3 +187,12 @@ func (t *Tunnel) keepAliveLoop(sshConn ssh.Conn) {
 	// 在ping异常时关闭连接
 	sshConn.Close()
 }
+
+func (t *Tunnel) Close(ctx context.Context) error {
+	sshConn := t.getSSH(ctx)
+	if sshConn == nil {
+		t.Debugf("No ssh-conn to close")
+		return nil
+	}
+	return sshConn.Close()
+}

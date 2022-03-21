@@ -10,12 +10,14 @@ import (
 	"github.com/yunfeiyang1916/cloud-chisel/share/cio"
 	"github.com/yunfeiyang1916/cloud-chisel/share/cnet"
 	"github.com/yunfeiyang1916/cloud-chisel/share/settings"
+	"github.com/yunfeiyang1916/cloud-chisel/share/tunnel"
 	"golang.org/x/crypto/ssh"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"regexp"
+	"sync"
 	"time"
 )
 
@@ -60,6 +62,8 @@ type Server struct {
 	sshConfig *ssh.ServerConfig
 	// 可重载的用户源配置
 	users *settings.UserIndex
+	// 以localPort为键，tunnel为值的map
+	tunnels *sync.Map
 }
 
 // 升级器，将http连接升级成websocket
@@ -76,6 +80,7 @@ func NewServer(c *Config) (*Server, error) {
 		httpServer: cnet.NewHTTPServer(),
 		Logger:     cio.NewLogger("server"),
 		sessions:   settings.NewUsers(),
+		tunnels:    &sync.Map{},
 	}
 	server.Info = true
 	server.users = settings.NewUserIndex(server.Logger)
@@ -207,4 +212,23 @@ func (s *Server) DeleteUser(user string) {
 // Use nil to remove all.
 func (s *Server) ResetUsers(users []*settings.User) {
 	s.users.Reset(users)
+}
+
+func (s *Server) GetTunnel(ctx context.Context, localPort string) *tunnel.Tunnel {
+	t, ok := s.tunnels.Load(localPort)
+	if !ok {
+		return nil
+	}
+	tun := t.(*tunnel.Tunnel)
+	return tun
+}
+
+func (s *Server) CloseTunnel(ctx context.Context, localPort string) error {
+	t, ok := s.tunnels.Load(localPort)
+	if !ok {
+		s.Debugf("No tunnel to close")
+		return nil
+	}
+	tun := t.(*tunnel.Tunnel)
+	return tun.Close(ctx)
 }
