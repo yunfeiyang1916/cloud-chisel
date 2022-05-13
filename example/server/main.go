@@ -23,9 +23,9 @@ func main() {
 	defer cancel()
 	s.Debug = true
 	time.AfterFunc(time.Minute, func() {
-		s.CloseTunnel(ctx, "28081")
+		// s.CloseTunnel(ctx, "28081")
 		time.Sleep(time.Second)
-		s.CloseTunnel(ctx, "28080")
+		// s.CloseTunnel(ctx, "28080")
 	})
 	if err := s.StartContext(ctx, host, port); err != nil {
 		log.Fatal(err)

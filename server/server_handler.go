@@ -144,9 +144,13 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, req *http.Request) {
 		KeepAlive: s.config.KeepAlive,
 	})
 	// 以第一个配置的localPort为键
+	var localPort string
 	if len(c.Remotes) > 0 {
 		r := c.Remotes[0]
-		s.tunnels.Store(r.LocalPort, tunnel)
+		localPort = r.LocalPort
+		if s.config.onConnect != nil {
+			go s.config.onConnect(localPort, tunnel)
+		}
 	}
 	// bind
 	eg, ctx := errgroup.WithContext(req.Context())
@@ -167,5 +171,8 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, req *http.Request) {
 		l.Debugf("Closed connection (%s)", err)
 	} else {
 		l.Debugf("Closed connection")
+	}
+	if localPort != "" && s.config.onConnectClose != nil {
+		go s.config.onConnectClose(localPort)
 	}
 }

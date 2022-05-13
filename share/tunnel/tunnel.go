@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"github.com/armon/go-socks5"
 	"github.com/yunfeiyang1916/cloud-chisel/share/cio"
 	"github.com/yunfeiyang1916/cloud-chisel/share/cnet"
@@ -172,20 +173,46 @@ func (t *Tunnel) BindRemotes(ctx context.Context, remotes []*settings.Remote) er
 
 // 持续保活
 func (t *Tunnel) keepAliveLoop(sshConn ssh.Conn) {
+	msg := fmt.Sprintf("[LocalAddr:%s]=>[RemoteAddr:%s]", sshConn.LocalAddr(), sshConn.RemoteAddr())
+	defer func() {
+		// 在ping异常时关闭连接
+		t.Errorf("%s,close ssh connection on abnormal ping", msg)
+		sshConn.Close()
+	}()
 	// 一直ping，持续保活
 	for {
 		time.Sleep(t.Config.KeepAlive)
-		_, b, err := sshConn.SendRequest("ping", true, nil)
-		if err != nil {
-			break
-		}
-		if len(b) > 0 && !bytes.Equal(b, []byte("pong")) {
-			t.Debugf("strange ping response")
-			break
+		// t.Infof("%s start send request keep alive", msg)
+		select {
+		case <-time.After(t.Config.KeepAlive):
+			return
+		case err := <-t.KeepAliveChan(sshConn):
+			if err != nil {
+				return
+			}
 		}
 	}
-	// 在ping异常时关闭连接
-	sshConn.Close()
+}
+
+func (t *Tunnel) KeepAliveChan(sshConn ssh.Conn) <-chan error {
+	msg := fmt.Sprintf("[LocalAddr:%s]=>[RemoteAddr:%s]", sshConn.LocalAddr(), sshConn.RemoteAddr())
+	ch := make(chan error)
+	go func() {
+		defer close(ch)
+		_, b, err := sshConn.SendRequest("ping", true, nil)
+		// t.Infof("%s end send request keep alive", msg)
+		if err != nil {
+			t.Errorf("%s ping error,err=%s", msg, err)
+			ch <- err
+		}
+		// t.Infof("%s keep alive content %s", msg, string(b))
+		if len(b) > 0 && !bytes.Equal(b, []byte("pong")) {
+			t.Debugf("strange ping response")
+			t.Errorf("%s strange ping response", msg)
+			ch <- fmt.Errorf("strange ping response")
+		}
+	}()
+	return ch
 }
 
 func (t *Tunnel) Close(ctx context.Context) error {

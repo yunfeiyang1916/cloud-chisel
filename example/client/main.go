@@ -10,7 +10,7 @@ import (
 func main() {
 	c := chclient.Config{
 		Server:           "localhost:28888",
-		Remotes:          []string{"R:0.0.0.0:28080:8080", "R:0.0.0.0:28081:8080"},
+		Remotes:          []string{"R:0.0.0.0:28080:www.baidu.com:80"},
 		Auth:             "9af92df4-e427-4086-9841-08da393c0f5c:b5fbcf537ed1a0d284fb6c1e236de0a4",
 		KeepAlive:        25 * time.Second,
 		MaxRetryInterval: time.Minute,

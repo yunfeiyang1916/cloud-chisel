@@ -17,7 +17,6 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"regexp"
-	"sync"
 	"time"
 )
 
@@ -43,6 +42,8 @@ type Config struct {
 	KeepAlive time.Duration
 	// 传输层安全协议的设置
 	TLS TLSConfig
+	onConnect      func(localPort string, tun *tunnel.Tunnel)
+	onConnectClose func(localPort string)
 }
 
 type Server struct {
@@ -62,8 +63,6 @@ type Server struct {
 	sshConfig *ssh.ServerConfig
 	// 可重载的用户源配置
 	users *settings.UserIndex
-	// 以localPort为键，tunnel为值的map
-	tunnels *sync.Map
 }
 
 // 升级器，将http连接升级成websocket
@@ -80,7 +79,6 @@ func NewServer(c *Config) (*Server, error) {
 		httpServer: cnet.NewHTTPServer(),
 		Logger:     cio.NewLogger("server"),
 		sessions:   settings.NewUsers(),
-		tunnels:    &sync.Map{},
 	}
 	server.Info = true
 	server.users = settings.NewUserIndex(server.Logger)
@@ -212,23 +210,4 @@ func (s *Server) DeleteUser(user string) {
 // Use nil to remove all.
 func (s *Server) ResetUsers(users []*settings.User) {
 	s.users.Reset(users)
-}
-
-func (s *Server) GetTunnel(ctx context.Context, localPort string) *tunnel.Tunnel {
-	t, ok := s.tunnels.Load(localPort)
-	if !ok {
-		return nil
-	}
-	tun := t.(*tunnel.Tunnel)
-	return tun
-}
-
-func (s *Server) CloseTunnel(ctx context.Context, localPort string) error {
-	t, ok := s.tunnels.Load(localPort)
-	if !ok {
-		s.Debugf("No tunnel to close")
-		return nil
-	}
-	tun := t.(*tunnel.Tunnel)
-	return tun.Close(ctx)
 }
