@@ -8,6 +8,14 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net"
+	"net/http"
+	"net/url"
+	"regexp"
+	"strings"
+	"time"
+
 	"github.com/gorilla/websocket"
 	chshare "github.com/yunfeiyang1916/cloud-chisel/share"
 	"github.com/yunfeiyang1916/cloud-chisel/share/ccrypto"
@@ -16,13 +24,6 @@ import (
 	"github.com/yunfeiyang1916/cloud-chisel/share/settings"
 	"github.com/yunfeiyang1916/cloud-chisel/share/tunnel"
 	"golang.org/x/net/proxy"
-	"io/ioutil"
-	"net"
-	"net/http"
-	"net/url"
-	"regexp"
-	"strings"
-	"time"
 
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/sync/errgroup"
@@ -286,6 +287,7 @@ func (c *Client) Start(ctx context.Context) error {
 		if len(clientInbound) == 0 {
 			return nil
 		}
+		// 将给定的远程服务转换为代理并阻塞，直到调用者通过取消上下文来关闭代理或出现代理错误后关闭
 		return c.tunnel.BindRemotes(ctx, clientInbound)
 	})
 	return nil

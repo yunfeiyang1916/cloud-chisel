@@ -34,15 +34,15 @@ import (
 
 // Remote 本地与远程服务的映射
 type Remote struct {
-	// 指的是chisel server上的host
+	// forwarding host 指的是chisel server上的host
 	LocalHost string
-	// 指的是chisel server上的port
+	// forwarding port 指的是chisel server上的port
 	LocalPort string
 	// 指的是chisel server上的协议
 	LocalProto string
-	// 指的是要代理的服务的host
+	// target host 指的是要代理的服务的host
 	RemoteHost string
-	// 指的是要代理的服务的port
+	// target port 指的是要代理的服务的port
 	RemotePort string
 	// 指的是要代理的服务的协议
 	RemoteProto string
@@ -209,7 +209,7 @@ func (r Remote) Encode() string {
 	return local + ":" + remote
 }
 
-//Local is the decodable local portion
+// Local is the decodable local portion
 func (r Remote) Local() string {
 	if r.Stdio {
 		return "stdio"

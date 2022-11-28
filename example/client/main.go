@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
-	chclient "github.com/yunfeiyang1916/cloud-chisel/client"
 	"log"
 	"time"
+
+	chclient "github.com/yunfeiyang1916/cloud-chisel/client"
 )
 
 func main() {
-	c := chclient.Config{
+	c := &chclient.Config{
 		Server:           "localhost:28888",
 		Remotes:          []string{"R:0.0.0.0:28080:www.baidu.com:80"},
 		Auth:             "9af92df4-e427-4086-9841-08da393c0f5c:b5fbcf537ed1a0d284fb6c1e236de0a4",
@@ -16,7 +17,9 @@ func main() {
 		MaxRetryInterval: time.Minute,
 		MaxRetryCount:    -1,
 	}
-	client, err := chclient.NewClient(&c)
+	//testProxy(c)
+	testPing(c)
+	client, err := chclient.NewClient(c)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -32,4 +35,15 @@ func main() {
 	if err = client.Wait(); err != nil {
 		log.Fatalln("client.Wait err:", err)
 	}
+}
+
+func testPing(c *chclient.Config) {
+	c.Remotes = []string{"127.0.0.1:40000:0.0.0.0:4000"}
+	c.Auth = "ping:pong"
+}
+
+func testProxy(c *chclient.Config) {
+	c.Remotes = []string{"80"}
+	c.Auth = "9af92df4-e427-4086-9841-08da393c0f5c:b5fbcf537ed1a0d284fb6c1e236de0a4"
+	c.Server = "118.24.6.169:80"
 }
