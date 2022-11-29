@@ -18,7 +18,8 @@ func main() {
 		MaxRetryCount:    -1,
 	}
 	//testProxy(c)
-	testPing(c)
+	//testPing(c)
+	testAll(c)
 	client, err := chclient.NewClient(c)
 	if err != nil {
 		log.Fatalln(err)
@@ -35,6 +36,11 @@ func main() {
 	if err = client.Wait(); err != nil {
 		log.Fatalln("client.Wait err:", err)
 	}
+}
+
+func testAll(c *chclient.Config) {
+	c.Remotes = []string{"127.0.0.1:40000:hao123.com:80"}
+	c.Auth = "all:all"
 }
 
 func testPing(c *chclient.Config) {
