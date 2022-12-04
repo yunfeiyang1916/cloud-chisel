@@ -3,6 +3,13 @@ package chserver
 import (
 	"context"
 	"errors"
+	"log"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"regexp"
+	"time"
+
 	"github.com/gorilla/websocket"
 	"github.com/jpillora/requestlog"
 	chshare "github.com/yunfeiyang1916/cloud-chisel/share"
@@ -12,12 +19,6 @@ import (
 	"github.com/yunfeiyang1916/cloud-chisel/share/settings"
 	"github.com/yunfeiyang1916/cloud-chisel/share/tunnel"
 	"golang.org/x/crypto/ssh"
-	"log"
-	"net/http"
-	"net/http/httputil"
-	"net/url"
-	"regexp"
-	"time"
 )
 
 // Config server配置
@@ -41,9 +42,13 @@ type Config struct {
 	// 您必须使用单位指定时间，例如“5s”或“2m”。 默认为“25s”（设置为 0s 以禁用）。
 	KeepAlive time.Duration
 	// 传输层安全协议的设置
-	TLS TLSConfig
-	onConnect      func(localPort string, tun *tunnel.Tunnel)
-	onConnectClose func(localPort string)
+	TLS       TLSConfig
+	OnConnect func(localPort, remotePort string, tun *tunnel.Tunnel)
+	OnClose   func(localPort string)
+	// 使用隧道转发请求时创建连接的回调
+	OnForwardingConnect func(localPort string, logger *cio.Logger)
+	// 使用隧道转发请求时结束连接的回调
+	OnForwardingClose func(localPort string, logger *cio.Logger)
 }
 
 type Server struct {

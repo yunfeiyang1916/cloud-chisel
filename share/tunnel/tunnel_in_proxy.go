@@ -2,17 +2,20 @@ package tunnel
 
 import (
 	"context"
+	"io"
+	"net"
+
 	"github.com/jpillora/sizestr"
 	"github.com/yunfeiyang1916/cloud-chisel/share/cio"
 	"github.com/yunfeiyang1916/cloud-chisel/share/settings"
 	"golang.org/x/crypto/ssh"
-	"io"
-	"net"
 )
 
 // ssh 隧道接口，Tunnel子类型
 type sshTunnel interface {
 	getSSH(ctx context.Context) ssh.Conn
+	onConnectFunc(localPort string, logger *cio.Logger)
+	onCloseFunc(localPort string, logger *cio.Logger)
 }
 
 type Proxy struct {
@@ -126,6 +129,7 @@ func (p *Proxy) pipeRemote(ctx context.Context, src io.ReadWriteCloser) {
 	cid := p.count
 	l := p.Fork("conn#%d", cid)
 	l.Debugf("Open")
+	p.sshTun.onConnectFunc(p.remote.LocalPort, l)
 	sshConn := p.sshTun.getSSH(ctx)
 	if sshConn == nil {
 		l.Debugf("No remote connection")
@@ -142,4 +146,5 @@ func (p *Proxy) pipeRemote(ctx context.Context, src io.ReadWriteCloser) {
 	//then pipe
 	s, r := cio.Pipe(src, dst)
 	l.Debugf("Close (sent %s received %s)", sizestr.ToString(s), sizestr.ToString(r))
+	p.sshTun.onCloseFunc(p.remote.LocalPort, l)
 }

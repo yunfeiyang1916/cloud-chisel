@@ -5,17 +5,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
+	"sync"
+	"time"
+
 	"github.com/armon/go-socks5"
 	"github.com/yunfeiyang1916/cloud-chisel/share/cio"
 	"github.com/yunfeiyang1916/cloud-chisel/share/cnet"
 	"github.com/yunfeiyang1916/cloud-chisel/share/settings"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/sync/errgroup"
-	"io/ioutil"
-	"log"
-	"os"
-	"sync"
-	"time"
 )
 
 // Config 隧道配置
@@ -27,6 +28,11 @@ type Config struct {
 	Outbound  bool
 	Socks     bool
 	KeepAlive time.Duration
+	Remotes   []*settings.Remote
+	// 使用隧道转发请求时创建连接的回调
+	OnConnect func(localPort string, logger *cio.Logger)
+	// 使用隧道转发请求时结束连接的回调
+	OnClose func(localPort string, logger *cio.Logger)
 }
 
 // Tunnel 表示具有代理能力的SSH隧道, chisel的客户端和服务端都是隧道。
@@ -128,6 +134,18 @@ func (t *Tunnel) getSSH(ctx context.Context) ssh.Conn {
 		c := t.activeConn
 		t.activeConnMut.RUnlock()
 		return c
+	}
+}
+
+func (t *Tunnel) onConnectFunc(localPort string, logger *cio.Logger) {
+	if t.OnConnect != nil {
+		t.OnConnect(localPort, logger)
+	}
+}
+
+func (t *Tunnel) onCloseFunc(localPort string, logger *cio.Logger) {
+	if t.OnClose != nil {
+		t.OnClose(localPort, logger)
 	}
 }
 

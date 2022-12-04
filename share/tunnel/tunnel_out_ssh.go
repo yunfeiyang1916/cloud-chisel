@@ -2,14 +2,15 @@ package tunnel
 
 import (
 	"fmt"
+	"io"
+	"net"
+	"strings"
+
 	"github.com/jpillora/sizestr"
 	"github.com/yunfeiyang1916/cloud-chisel/share/cio"
 	"github.com/yunfeiyang1916/cloud-chisel/share/cnet"
 	"github.com/yunfeiyang1916/cloud-chisel/share/settings"
 	"golang.org/x/crypto/ssh"
-	"io"
-	"net"
-	"strings"
 )
 
 // 处理ssh在正常数据流之外发送的请求，接收ping,响应pong。主要用于保活
@@ -64,6 +65,11 @@ func (t *Tunnel) handleSSHChannel(ch ssh.NewChannel) {
 	// 递增连接计数器打开数量
 	t.connStats.Open()
 	l.Debugf("Open %s", t.connStats.String())
+	forwardingPort := ""
+	if len(t.Remotes) > 0 {
+		forwardingPort = t.Remotes[0].LocalPort
+	}
+	t.onConnectFunc(forwardingPort, l)
 	if socks {
 		err = t.handleSocks(stream)
 	} else if udp {
@@ -77,6 +83,7 @@ func (t *Tunnel) handleSSHChannel(ch ssh.NewChannel) {
 		errmsg = fmt.Sprintf(" (error %s)", err)
 	}
 	l.Debugf("Close %s%s", t.connStats.String(), errmsg)
+	t.onCloseFunc(forwardingPort, l)
 }
 
 func (t *Tunnel) handleSocks(src io.ReadWriteCloser) error {

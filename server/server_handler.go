@@ -1,16 +1,17 @@
 package chserver
 
 import (
+	"net/http"
+	"strings"
+	"sync/atomic"
+	"time"
+
 	chshare "github.com/yunfeiyang1916/cloud-chisel/share"
 	"github.com/yunfeiyang1916/cloud-chisel/share/cnet"
 	"github.com/yunfeiyang1916/cloud-chisel/share/settings"
 	"github.com/yunfeiyang1916/cloud-chisel/share/tunnel"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/sync/errgroup"
-	"net/http"
-	"strings"
-	"sync/atomic"
-	"time"
 )
 
 // handleClientHandler 是主要的HTTP websocket处理器
@@ -142,14 +143,17 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, req *http.Request) {
 		Outbound:  true, // 服务器总是接受出站
 		Socks:     s.config.Socks5,
 		KeepAlive: s.config.KeepAlive,
+		OnConnect: s.config.OnForwardingConnect,
+		OnClose:   s.config.OnForwardingClose,
 	})
 	// 以第一个配置的localPort为键
 	var localPort string
 	if len(c.Remotes) > 0 {
 		r := c.Remotes[0]
 		localPort = r.LocalPort
-		if s.config.onConnect != nil {
-			go s.config.onConnect(localPort, tunnel)
+		remotePort := r.RemotePort
+		if s.config.OnConnect != nil {
+			go s.config.OnConnect(localPort, remotePort, tunnel)
 		}
 	}
 	// bind
@@ -172,7 +176,7 @@ func (s *Server) handleWebsocket(w http.ResponseWriter, req *http.Request) {
 	} else {
 		l.Debugf("Closed connection")
 	}
-	if localPort != "" && s.config.onConnectClose != nil {
-		go s.config.onConnectClose(localPort)
+	if localPort != "" && s.config.OnClose != nil {
+		go s.config.OnClose(localPort)
 	}
 }

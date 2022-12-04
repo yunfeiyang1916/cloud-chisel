@@ -66,6 +66,10 @@ type Config struct {
 	TLS TLSConfig
 	// 拨号
 	DialContext func(ctx context.Context, network, addr string) (net.Conn, error)
+	// 使用隧道转发请求时创建连接的回调
+	OnForwardingConnect func(localPort string, logger *cio.Logger)
+	// 使用隧道转发请求时结束连接的回调
+	OnForwardingClose func(localPort string, logger *cio.Logger)
 }
 
 // TLSConfig Transport Layer Security 传输层安全协议的设置
@@ -216,6 +220,9 @@ func NewClient(c *Config) (*Client, error) {
 		Outbound:  hasReverse,
 		Socks:     hasReverse && hasSocks,
 		KeepAlive: client.config.KeepAlive,
+		Remotes:   client.computed.Remotes,
+		OnConnect: client.config.OnForwardingConnect,
+		OnClose:   client.config.OnForwardingClose,
 	})
 	return client, nil
 }
